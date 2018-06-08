@@ -1,0 +1,4 @@
+﻿<ui:InvokeWorkflowFile ContinueOnError="{{x:Null}}" DisplayName="Invoke {0}" UnSafe="False" WorkflowFileName="{0}.xaml">
+  <ui:InvokeWorkflowFile.Arguments>
+  </ui:InvokeWorkflowFile.Arguments>
+</ui:InvokeWorkflowFile>
