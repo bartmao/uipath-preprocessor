@@ -63,14 +63,7 @@ namespace ConsoleApplication1
                             });
 
                             var ps = method.GetParameters();
-                            var margs = ArgumentsResolver.Resolve(attrs[h.Name]);
-                            for (int i = 0; i < margs.Length; i++)
-                            {
-                                var marg = margs[i];
-                                if (marg.ToString().StartsWith("$$"))
-                                    marg = h.WorkItem.Ele.XAttribute(marg.ToString().Substring(2)).Value;
-                                //h.WorkItem.Ele.XPathSelectElement()
-                            }
+                            var margs = new ArgumentsResolver(activity).Resolve(attrs[h.Name]);
 
                             if (ps.LastOrDefault()?.ParameterType?.IsArray ?? false)
                             {

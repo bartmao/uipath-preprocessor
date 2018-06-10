@@ -1,20 +1,31 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Xml.XPath;
 
 namespace UIPath.Preprossor.Lib
 {
     public class ArgumentsResolver
     {
+        public XElement Activity { get; set; }
+
+        public ArgumentsResolver(XElement activity)
+        {
+            Activity = activity;
+        }
+
         /// <summary>
         /// Accept types:
         /// 1.String 2.Number 3.Nothing 4.Boolean 5.WF variable($xxx) 6.Activity attribute($$xxx)
         /// </summary>
         /// <param name="paraString"></param>
         /// <returns></returns>
-        public static object[] Resolve(string paraString)
+        public object[] Resolve(string paraString)
         {
             var parameters = new List<object>();
             if (string.IsNullOrWhiteSpace(paraString)) return parameters.ToArray();
@@ -27,12 +38,7 @@ namespace UIPath.Preprossor.Lib
             {
                 if (canParse)
                 {
-                    if (sb.Length >= 2 && sb[0] == '"' && sb[sb.Length - 1] == '"') parameters.Add(sb.ToString(1, sb.Length - 2));
-                    else if (sb.ToString().ToLower() == "false" || sb.ToString().ToLower() == "true") parameters.Add(bool.Parse(sb.ToString()));
-                    else if (sb.ToString().ToLower() == "nothing" || sb.ToString() == "") parameters.Add(null);
-                    else if (sb.Length >= 3 && sb.ToString().StartsWith("$$")) parameters.Add(sb.ToString());
-                    else if (sb.Length >= 2 && sb[0] == '$') parameters.Add("[" + sb.ToString().Substring(1) + "]");
-                    else parameters.Add(double.Parse(sb.ToString()));
+                    parameters.Add(GetParameter(sb));
                     sb = new StringBuilder();
                     canParse = false;
                 }
@@ -92,16 +98,36 @@ namespace UIPath.Preprossor.Lib
                 }
             }
 
-            if (sb.Length >= 2 && sb[0] == '"' && sb[sb.Length - 1] == '"') parameters.Add(sb.ToString(1, sb.Length - 2));
-            else if (sb.ToString().ToLower() == "false" || sb.ToString().ToLower() == "true") parameters.Add(bool.Parse(sb.ToString()));
-            else if (sb.ToString().ToLower() == "nothing" || sb.ToString() == "") parameters.Add(null);
-            else if (sb.Length >= 3 && sb.ToString().StartsWith("$$")) parameters.Add(sb.ToString());
-            else if (sb.Length >= 2 && sb[0] == '$') parameters.Add("[" + sb.ToString().Substring(1) + "]");
-            else parameters.Add(double.Parse(sb.ToString()));
+            parameters.Add(GetParameter(sb));
 
             return parameters.ToArray();
         }
 
-        //private static object GetParameter() { }
+        private object GetParameter(StringBuilder sb)
+        {
+            double v;
+            if (sb.Length >= 2 && sb[0] == '"' && sb[sb.Length - 1] == '"') return sb.ToString(1, sb.Length - 2);
+            else if (sb.ToString().ToLower() == "false" || sb.ToString().ToLower() == "true") return bool.Parse(sb.ToString());
+            else if (sb.ToString().ToLower() == "nothing" || sb.ToString() == "") return null;
+            else if (double.TryParse(sb.ToString(), out v)) return v;
+            else if (Regex.IsMatch(sb.ToString(), @"^\[.*\]$")) return sb.ToString();
+            else if (Regex.IsMatch(sb.ToString(), "^\\$\\\".*\\\"$"))
+            {
+                try
+                {
+                    var attr = (IEnumerable)Activity.XPathEvaluate(sb.ToString(2, sb.Length - 3), XMLExetension.NSManager);
+                    var attrVal =  XMLExetension.Escape(attr.Cast<XAttribute>().First().Value);
+                    Console.WriteLine(attrVal);
+                    return attrVal;
+                }
+                catch (InvalidOperationException)
+                {
+                    throw new Exception("Invalid XPath expression");
+                }
+
+            }
+
+            throw new InvalidCastException("Failed to resolve paramter: " + sb.ToString());
+        }
     }
 }

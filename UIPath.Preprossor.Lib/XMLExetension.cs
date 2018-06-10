@@ -59,6 +59,14 @@ namespace UIPath.Preprossor.Lib
             var attrs = doc.XElement("Activity").Attributes().Where(a => a.Name.NamespaceName == "http://www.w3.org/2000/xmlns/");
             return attrs.ToDictionary(a => a.Value, a => a);
         }
+
+        public static string Escape(string unescaped)
+        {
+            XmlDocument doc = new XmlDocument();
+            XmlNode node = doc.CreateElement("root");
+            node.InnerText = unescaped;
+            return node.InnerXml;
+        }
     }
 
 }

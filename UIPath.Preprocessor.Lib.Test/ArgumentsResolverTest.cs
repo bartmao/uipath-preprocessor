@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UIPath.Preprossor.Lib;
+using System.Xml.Linq;
 
 namespace UIPath.Preprocessor.Lib.Test
 {
@@ -21,12 +22,14 @@ namespace UIPath.Preprocessor.Lib.Test
             _TestResolve("\"\\\"\", Nothing");
             _TestResolve(" \"\\\\\", Nothing");
             _TestResolve("\"\\tTest\\t\\\"\", Nothing");
+            _TestResolve("[Value], Nothing");
+            _TestResolve("$\"Value/@Text\", Nothing");
         }
 
         public void _TestResolve(string str)
         {
             Console.WriteLine(str);
-            var paras = ArgumentsResolver.Resolve(str);
+            var paras = new ArgumentsResolver(XElement.Parse("<Node Name=\"Node\"><Value Text=\"Text\"></Value></Node>")).Resolve(str);
             foreach (var p in paras)
             {
                 Console.WriteLine("Parameter: " + p?.ToString() ?? "");
