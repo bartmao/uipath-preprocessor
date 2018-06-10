@@ -11,7 +11,7 @@ namespace UIPath.Preprossor.Lib
 {
     public static class XMLExetension
     {
-        public const string ns_asp2010 = "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation";
+        public const string ns_sap2010 = "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation";
         public const string ns_x = "http://schemas.microsoft.com/winfx/2006/xaml";
         public const string ns_ui = "http://schemas.uipath.com/workflow/activities";
 
@@ -20,7 +20,8 @@ namespace UIPath.Preprossor.Lib
         static XMLExetension()
         {
             NSManager.AddNamespace("", "http://schemas.microsoft.com/netfx/2009/xaml/activities");
-            NSManager.AddNamespace("asp2010", ns_asp2010);
+            NSManager.AddNamespace("a", "http://schemas.microsoft.com/netfx/2009/xaml/activities");
+            NSManager.AddNamespace("sap2010", ns_sap2010);
             NSManager.AddNamespace("x", ns_x);
             NSManager.AddNamespace("ui", ns_ui);
         }

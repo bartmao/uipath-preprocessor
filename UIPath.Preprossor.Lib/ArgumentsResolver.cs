@@ -10,7 +10,7 @@ namespace UIPath.Preprossor.Lib
     {
         /// <summary>
         /// Accept types:
-        /// 1.String 2.Number 3.Nothing 4.Boolean 5.uipath variable($xxx)
+        /// 1.String 2.Number 3.Nothing 4.Boolean 5.WF variable($xxx) 6.Activity attribute($$xxx)
         /// </summary>
         /// <param name="paraString"></param>
         /// <returns></returns>
@@ -30,6 +30,7 @@ namespace UIPath.Preprossor.Lib
                     if (sb.Length >= 2 && sb[0] == '"' && sb[sb.Length - 1] == '"') parameters.Add(sb.ToString(1, sb.Length - 2));
                     else if (sb.ToString().ToLower() == "false" || sb.ToString().ToLower() == "true") parameters.Add(bool.Parse(sb.ToString()));
                     else if (sb.ToString().ToLower() == "nothing" || sb.ToString() == "") parameters.Add(null);
+                    else if (sb.Length >= 3 && sb.ToString().StartsWith("$$")) parameters.Add(sb.ToString());
                     else if (sb.Length >= 2 && sb[0] == '$') parameters.Add("[" + sb.ToString().Substring(1) + "]");
                     else parameters.Add(double.Parse(sb.ToString()));
                     sb = new StringBuilder();
@@ -94,10 +95,13 @@ namespace UIPath.Preprossor.Lib
             if (sb.Length >= 2 && sb[0] == '"' && sb[sb.Length - 1] == '"') parameters.Add(sb.ToString(1, sb.Length - 2));
             else if (sb.ToString().ToLower() == "false" || sb.ToString().ToLower() == "true") parameters.Add(bool.Parse(sb.ToString()));
             else if (sb.ToString().ToLower() == "nothing" || sb.ToString() == "") parameters.Add(null);
+            else if (sb.Length >= 3 && sb.ToString().StartsWith("$$")) parameters.Add(sb.ToString());
             else if (sb.Length >= 2 && sb[0] == '$') parameters.Add("[" + sb.ToString().Substring(1) + "]");
             else parameters.Add(double.Parse(sb.ToString()));
 
             return parameters.ToArray();
         }
+
+        //private static object GetParameter() { }
     }
 }

@@ -9,7 +9,7 @@ namespace UIPath.Preprossor.Lib
 {
     public abstract class AttributeHanlder
     {
-        protected WorkItem WorkItem { get; set; }
+        public WorkItem WorkItem { get; set; }
 
         public string Name { get; set; }
 

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.XPath;
 using UIPath.Preprossor.Lib;
 
 namespace ConsoleApplication1
@@ -31,9 +32,9 @@ namespace ConsoleApplication1
             DFSActvities(mainSeq, activities);
             foreach (var activity in activities)
             {
-                if (activity.XAttribute("WorkflowViewState.IdRef", XMLExetension.ns_asp2010) != null)
+                if (activity.XAttribute("WorkflowViewState.IdRef", XMLExetension.ns_sap2010) != null)
                 {
-                    var attr = activity.XAttribute("Annotation.AnnotationText", XMLExetension.ns_asp2010);
+                    var attr = activity.XAttribute("Annotation.AnnotationText", XMLExetension.ns_sap2010);
                     var attrs = new Dictionary<string, string>();
                     if (attr != null)
                     {
@@ -52,7 +53,7 @@ namespace ConsoleApplication1
                         if (attrs.Keys.Contains(h.Name))
                         {
                             var method = h.GetType().GetMethod("Handle");
-                            var set_workItem = h.GetType().GetProperty("WorkItem", BindingFlags.NonPublic | BindingFlags.Instance);
+                            var set_workItem = h.GetType().GetProperty("WorkItem");
                             set_workItem.SetValue(h, new WorkItem()
                             {
                                 Doc = CurDoc,
@@ -60,8 +61,34 @@ namespace ConsoleApplication1
                                 FileName = FileName,
                                 WorkingPath = @"C:\Users\bmao002\Documents\UiPath\test1"
                             });
-                            //method.Invoke(h, new object[] { "Template.xaml" });
-                            method.Invoke(h, ArgumentsResolver.Resolve(attrs[h.Name]));
+
+                            var ps = method.GetParameters();
+                            var margs = ArgumentsResolver.Resolve(attrs[h.Name]);
+                            for (int i = 0; i < margs.Length; i++)
+                            {
+                                var marg = margs[i];
+                                if (marg.ToString().StartsWith("$$"))
+                                    marg = h.WorkItem.Ele.XAttribute(marg.ToString().Substring(2)).Value;
+                                //h.WorkItem.Ele.XPathSelectElement()
+                            }
+
+                            if (ps.LastOrDefault()?.ParameterType?.IsArray ?? false)
+                            {
+                                var eleType = ps.LastOrDefault().ParameterType.GetElementType();
+                                var paramsLen = margs.Length - ps.Length + 1;
+                                var paramsObj = Array.CreateInstance(eleType, paramsLen);
+                                for (int i = ps.Length - 1; i < margs.Length; i++)
+                                {
+                                    paramsObj.SetValue(margs[i], i - (ps.Length - 1));
+                                }
+                                var _args = margs.Take(ps.Length - 1).ToList();
+                                _args.Add(paramsObj);
+                                method.Invoke(h, _args.ToArray());
+                            }
+                            else
+                            {
+                                method.Invoke(h, margs);
+                            }
                         }
                     }
                 }
