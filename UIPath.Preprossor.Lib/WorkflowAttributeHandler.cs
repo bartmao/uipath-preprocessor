@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.Xml.XPath;
 
 namespace UIPath.Preprossor.Lib
 {
@@ -23,7 +24,7 @@ namespace UIPath.Preprossor.Lib
             // 4*(0). Get all accessible varibles in original doc and convert them to arguments
             // 5. Invoke new workflow from origin workflow
 
-            var n = WorkItem.Ele.Parent;
+            var n = WorkItem.GetActivity().Parent;
             var variables = new List<XElement>();
             while (n != null)
             {
@@ -42,24 +43,25 @@ namespace UIPath.Preprossor.Lib
             }
 
             var p = Path.Combine(WorkItem.WorkingPath, newWorkflowName + ".xaml");
-            if (File.Exists(p)) throw new Exception("Workflow file existed:" + p);
+            //if (File.Exists(p)) throw new Exception("Workflow file existed:" + p);
             File.Copy(WorkItem.FileName, p, true);
             XDocument newDoc = null;
-            XElement mainNode;
+            XElement root;
             using (var stream = File.OpenRead(p))
             {
                 newDoc = XDocument.Load(stream);
-                mainNode = newDoc.XElement("Activity");
-                mainNode.XElement("Sequence").RemoveAll();
-                mainNode.XElement("Sequence").Add(WorkItem.Ele);
+                root = newDoc.XElement("Activity");
+                root.XElement("Sequence").RemoveAll();
+                root.XElement("Sequence").Add(WorkItem.GetActivity());
+                root.XPathSelectElement("//*[@UIPathPreprocessor]").Attribute("UIPathPreprocessor").Remove();
             }
 
-            if (mainNode.XElement("Members", XMLExetension.ns_x) == null)
+            if (root.XElement("Members", XMLExetension.ns_x) == null)
             {
                 var e = new XElement(XName.Get("Members", XMLExetension.ns_x));
-                mainNode.AddFirst(e);
+                root.AddFirst(e);
             }
-            var nMembers = mainNode.XElement("Members", XMLExetension.ns_x);
+            var nMembers = root.XElement("Members", XMLExetension.ns_x);
             foreach (var v in variables)
             {
                 var pt = XMLExetension.ParseElementFromTemplate("Property", v.Attribute("Name").Value, v.XAttribute("TypeArguments", XMLExetension.ns_x).Value);
@@ -75,23 +77,11 @@ namespace UIPath.Preprossor.Lib
                 var name = m.Attribute("Name").Value;
                 type = type.Substring(type.IndexOf('(') + 1, type.LastIndexOf(')') - type.IndexOf('(') - 1);
 
-                var direction = "In";
-                //if (m.Attribute("Type").Value.StartsWith("InArgument"))
-                //{
-                //    direction = "In";
-                //}
-                //else if (m.Attribute("Type").Value.StartsWith("OutArgument"))
-                //{
-                //    direction = "Out";
-                //}
-                //else if (m.Attribute("Type").Value.StartsWith("InOutArgument"))
-                //{
-                //    direction = "InOut";
-                //}
-                direction = "InOut";
+                var direction = "InOut";
                 args.Add(XMLExetension.ParseElement(string.Format("<{2}Argument x:TypeArguments=\"{0}\" x:Key=\"{1}\" >[{1}]</{2}Argument>", type, name, direction)));
             }
-            WorkItem.Ele.ReplaceWith(eleWorkflow);
+            eleWorkflow.SetAttributeValue("UIPathPreprocessor", "TRUE");
+            WorkItem.GetActivity().ReplaceWith(eleWorkflow);
         }
     }
 }

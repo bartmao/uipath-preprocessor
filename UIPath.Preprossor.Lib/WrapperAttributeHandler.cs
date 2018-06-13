@@ -32,9 +32,9 @@ namespace UIPath.Preprossor.Lib
 
             if (replacement != null)
             {
-                replacement.ReplaceWith(WorkItem.Ele);
+                replacement.ReplaceWith(WorkItem.GetActivity());
             }
-            WorkItem.Ele.ReplaceWith(doc.XElement("Activity").XElement("Sequence"));
+            WorkItem.GetActivity().ReplaceWith(doc.XElement("Activity").XElement("Sequence"));
 
             // Namespaces
             var existingNs = WorkItem.Doc.GetNamespaces();

@@ -7,15 +7,18 @@ using System.Xml.Linq;
 
 namespace UIPath.Preprossor.Lib
 {
-    public abstract class AttributeHanlder
+    public abstract class AttributeHanlder : ActivityHandler
     {
-        public WorkItem WorkItem { get; set; }
-
         public string Name { get; set; }
 
         public AttributeHanlder(string name)
         {
             Name = name;
+        }
+
+        public override bool Test(XElement activity, List<Tuple<string, string>> attrs)
+        {
+            return attrs.SingleOrDefault(a => a.Item1 == Name) != null;
         }
     }
 }

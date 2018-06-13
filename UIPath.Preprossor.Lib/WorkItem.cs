@@ -13,8 +13,13 @@ namespace UIPath.Preprossor.Lib
 
         public string FileName { get; set; }
 
-        public XElement Ele { get; set; }
-
         public string WorkingPath { get; set; }
+
+        public List<Tuple<string, string>> Attributes { get; set; }
+
+        public XElement GetActivity()
+        {
+            return Doc.Descendants().Single(e => e.Attribute("UIPathPreprocessor") != null);
+        }
     }
 }

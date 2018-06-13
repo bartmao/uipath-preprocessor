@@ -25,8 +25,8 @@ namespace ConsoleApplication1
             // 2. Find annotations contains attributes
             // 3. Handle these attributes
             // 4. Output new workflow
-            AttributeHandlers.Load();
-            var doc = LoadWorkflow(@"C:\Users\bmao002\Documents\UiPath\test1\Main1.xaml");
+            ActivityHandlers.Load();
+            var doc = LoadWorkflow(@"C:\Users\bmao002\Documents\UiPath\test1\Main1.1.xaml");
             var mainSeq = doc.Elements().First().Elements().Single(e => e.Name.LocalName == "Sequence");
             var activities = new List<XElement>();
             DFSActvities(mainSeq, activities);
@@ -34,8 +34,10 @@ namespace ConsoleApplication1
             {
                 if (activity.XAttribute("WorkflowViewState.IdRef", XMLExetension.ns_sap2010) != null)
                 {
+                    activity.SetAttributeValue("UIPathPreprocessor", "TRUE");
+
                     var attr = activity.XAttribute("Annotation.AnnotationText", XMLExetension.ns_sap2010);
-                    var attrs = new Dictionary<string, string>();
+                    var attrs = new List<Tuple<string, string>>();
                     if (attr != null)
                     {
                         foreach (var line in attr.Value.Split('\n'))
@@ -43,47 +45,64 @@ namespace ConsoleApplication1
                             var match = Regex.Match(line.Trim(), @"^@(\S+)\((.*)\)$");
                             if (match.Length >= 3)
                             {
-                                attrs.Add(match.Groups[1].Value, match.Groups[2].Value);
+                                attrs.Add(Tuple.Create(match.Groups[1].Value, match.Groups[2].Value));
                             }
                         }
                     }
 
-                    foreach (var h in AttributeHandlers.Handlers)
+                    var workitem = new WorkItem()
                     {
-                        if (attrs.Keys.Contains(h.Name))
+                        Doc = CurDoc,
+                        FileName = FileName,
+                        WorkingPath = @"C:\Users\bmao002\Documents\UiPath\test1",
+                        Attributes = attrs
+                    };
+                    foreach (var h in ActivityHandlers.TypedHandlers)
+                    {
+                        if (h.Test(activity, attrs))
                         {
-                            var method = h.GetType().GetMethod("Handle");
-                            var set_workItem = h.GetType().GetProperty("WorkItem");
-                            set_workItem.SetValue(h, new WorkItem()
-                            {
-                                Doc = CurDoc,
-                                Ele = activity,
-                                FileName = FileName,
-                                WorkingPath = @"C:\Users\bmao002\Documents\UiPath\test1"
-                            });
-
-                            var ps = method.GetParameters();
-                            var margs = new ArgumentsResolver(activity).Resolve(attrs[h.Name]);
-
-                            if (ps.LastOrDefault()?.ParameterType?.IsArray ?? false)
-                            {
-                                var eleType = ps.LastOrDefault().ParameterType.GetElementType();
-                                var paramsLen = margs.Length - ps.Length + 1;
-                                var paramsObj = Array.CreateInstance(eleType, paramsLen);
-                                for (int i = ps.Length - 1; i < margs.Length; i++)
-                                {
-                                    paramsObj.SetValue(margs[i], i - (ps.Length - 1));
-                                }
-                                var _args = margs.Take(ps.Length - 1).ToList();
-                                _args.Add(paramsObj);
-                                method.Invoke(h, _args.ToArray());
-                            }
-                            else
-                            {
-                                method.Invoke(h, margs);
-                            }
+                            h.WorkItem = workitem;
+                            h.Handle();
                         }
                     }
+
+                    foreach (var attrTuple in attrs)
+                    {
+                        var attribute = attrTuple.Item1;
+                        var h = ActivityHandlers.AttributeHandlers.FirstOrDefault(h1 => h1.Name == attribute);
+                        if (h == null) {
+                            Console.WriteLine("No handler for " + attribute);
+                            continue;
+                        }
+
+                        Console.WriteLine("Processing attribute:" + attribute);
+                        var method = h.GetType().GetMethod("Handle");
+                        h.WorkItem = workitem;
+
+                        var ps = method.GetParameters();
+                        var margs = new ArgumentsResolver(activity).Resolve(attrTuple.Item2);
+
+                        if (ps.LastOrDefault()?.ParameterType?.IsArray ?? false)
+                        {
+                            var eleType = ps.LastOrDefault().ParameterType.GetElementType();
+                            var paramsLen = margs.Length - ps.Length + 1;
+                            var paramsObj = Array.CreateInstance(eleType, paramsLen);
+                            for (int i = ps.Length - 1; i < margs.Length; i++)
+                            {
+                                paramsObj.SetValue(margs[i], i - (ps.Length - 1));
+                            }
+                            var _args = margs.Take(ps.Length - 1).ToList();
+                            _args.Add(paramsObj);
+                            method.Invoke(h, _args.ToArray());
+                        }
+                        else
+                        {
+                            method.Invoke(h, margs);
+                        }
+                    }
+
+                    // the target activity could updated by the hanlder
+                    workitem.GetActivity().Attribute("UIPathPreprocessor").Remove();
                 }
             }
 
