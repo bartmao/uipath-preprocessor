@@ -15,35 +15,38 @@ namespace UIPath.Preprossor.Lib
         {
         }
 
-        public void Handle(string templateName, params string[] args)
+        public void Handle(string wrapperFile, params string[] args)
         {
-            var tPath = Path.Combine(WorkItem.WorkingPath, templateName + ".xaml");
-            var docTxt = File.ReadAllText(tPath);
+            var wPath = Path.Combine(WorkContext.WorkingPath, wrapperFile + ".xaml");
+            var wapperTxt = File.ReadAllText(wPath);
+            var target = WorkContext.Activity;
 
             var counter = 1;
             foreach (var arg in args)
             {
-                docTxt = docTxt.Replace("\"$" + counter + "\"", "\"" + arg + "\"");
+                wapperTxt = wapperTxt.Replace("\"$" + counter + "\"", "\"" + arg + "\"");
                 counter++;
             }
 
-            var doc = XDocument.Parse(docTxt);
+            var doc = XDocument.Parse(wapperTxt);
             var replacement = doc.Descendants().SingleOrDefault(e => e.XAttribute("DisplayName")?.Value == "Placeholder");
-
             if (replacement != null)
             {
-                replacement.ReplaceWith(WorkItem.GetActivity());
+                replacement.ReplaceWith(target);
+                //WorkContext.MoveActivity(replacement, wPath);
             }
-            WorkItem.GetActivity().ReplaceWith(doc.XElement("Activity").XElement("Sequence"));
+
+            var wrapper = doc.XElement("Activity").XElement("Sequence");
+            WorkContext.ReplaceActivity(wrapper);
 
             // Namespaces
-            var existingNs = WorkItem.Doc.GetNamespaces();
+            var existingNs = WorkContext.Doc.GetNamespaces();
             var templateNs = doc.GetNamespaces();
             foreach (var ns in templateNs)
             {
                 if (!existingNs.ContainsKey(ns.Key))
                 {
-                    WorkItem.Doc.XElement("Activity").SetAttributeValue(ns.Value.Name, ns.Value.Value);
+                    WorkContext.Doc.XElement("Activity").SetAttributeValue(ns.Value.Name, ns.Value.Value);
                     Console.WriteLine("Add attribute:" + ns.Value.Value);
                 }
             }

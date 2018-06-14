@@ -24,7 +24,7 @@ namespace UIPath.Preprossor.Lib
             // 4*(0). Get all accessible varibles in original doc and convert them to arguments
             // 5. Invoke new workflow from origin workflow
 
-            var n = WorkItem.GetActivity().Parent;
+            var n = WorkContext.Activity.Parent;
             var variables = new List<XElement>();
             while (n != null)
             {
@@ -42,9 +42,9 @@ namespace UIPath.Preprossor.Lib
                 n = n.Parent;
             }
 
-            var p = Path.Combine(WorkItem.WorkingPath, newWorkflowName + ".xaml");
+            var p = Path.Combine(WorkContext.WorkingPath, newWorkflowName + ".xaml");
             //if (File.Exists(p)) throw new Exception("Workflow file existed:" + p);
-            File.Copy(WorkItem.FileName, p, true);
+            File.Copy(WorkContext.FileName, p, true);
             XDocument newDoc = null;
             XElement root;
             using (var stream = File.OpenRead(p))
@@ -52,8 +52,14 @@ namespace UIPath.Preprossor.Lib
                 newDoc = XDocument.Load(stream);
                 root = newDoc.XElement("Activity");
                 root.XElement("Sequence").RemoveAll();
-                root.XElement("Sequence").Add(WorkItem.GetActivity());
-                root.XPathSelectElement("//*[@UIPathPreprocessor]").Attribute("UIPathPreprocessor").Remove();
+                if (WorkContext.Activity == WorkContext.OriginalActivity)
+                {
+                    WorkContext.MoveActivity(root.XElement("Sequence"), p);
+                }
+                else
+                {
+                    root.XElement("Sequence").Add(WorkContext.Activity);
+                }
             }
 
             if (root.XElement("Members", XMLExetension.ns_x) == null)
@@ -80,8 +86,7 @@ namespace UIPath.Preprossor.Lib
                 var direction = "InOut";
                 args.Add(XMLExetension.ParseElement(string.Format("<{2}Argument x:TypeArguments=\"{0}\" x:Key=\"{1}\" >[{1}]</{2}Argument>", type, name, direction)));
             }
-            eleWorkflow.SetAttributeValue("UIPathPreprocessor", "TRUE");
-            WorkItem.GetActivity().ReplaceWith(eleWorkflow);
+            WorkContext.ReplaceActivity(eleWorkflow);
         }
     }
 }

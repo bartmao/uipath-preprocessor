@@ -45,6 +45,8 @@
     <Compile Include="AttributeHanlder.cs" />
     <Compile Include="AttributeHandlers.cs" />
     <Compile Include="ArgumentsResolver.cs" />
+    <Compile Include="Globals.cs" />
+    <Compile Include="TimeoutAttributeHandler.cs" />
     <Compile Include="TypeActivityHandler.cs" />
     <Compile Include="WorkflowAttributeHandler.cs" />
     <Compile Include="WrapperAttributeHandler.cs" />
