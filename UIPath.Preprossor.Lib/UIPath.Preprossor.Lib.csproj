@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActivityHandler.cs" />
-    <Compile Include="AddAttributeActivityHandler.cs" />
+    <Compile Include="AttributeControllerActivityHandler.cs" />
     <Compile Include="AttributeHanlder.cs" />
     <Compile Include="AttributeHandlers.cs" />
     <Compile Include="ArgumentsResolver.cs" />

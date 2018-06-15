@@ -32,19 +32,23 @@ namespace UIPath.Preprossor.Lib
                 var types = ass.GetTypes();
                 foreach (var type in types)
                 {
-                    if (typeof(TypedActivityHandler).IsAssignableFrom(type))
+                    if (typeof(TypedActivityHandler).IsAssignableFrom(type) && !type.IsAbstract)
                     {
-                        if (type == typeof(AddAttributeActivityHandler) && File.Exists(Environment.CurrentDirectory + "\\AddAttributes.properties"))
+                        if (type == typeof(AttributeControllerActivityHandler) && File.Exists(Environment.CurrentDirectory + "\\AttributesControllers.properties"))
                         {
-                            var txt = File.ReadAllText(Environment.CurrentDirectory + "\\AddAttributes.properties");
+                            var txt = File.ReadAllText(Environment.CurrentDirectory + "\\AttributesControllers.properties");
                             foreach (var line in txt.Split('\n'))
                             {
                                 var args = line.Trim().Split('\t');
                                 if (args.Length == 2)
                                 {
-                                    TypedHandlers.Add(new AddAttributeActivityHandler(args[1].Trim(), args[0].Trim()));
+                                    TypedHandlers.Add(new AttributeControllerActivityHandler(args[1].Trim(), args[0].Trim()));
                                 }
                             }
+                        }
+                        else
+                        {
+                            TypedHandlers.Add((Activator.CreateInstance(type) as TypedActivityHandler));
                         }
                     }
                     else if (typeof(AttributeHanlder).IsAssignableFrom(type) && !type.IsAbstract)
@@ -53,10 +57,6 @@ namespace UIPath.Preprossor.Lib
                     }
                 }
             }
-            //TypedHandlers.Add(new AddAttributeActivityHandler("@Timeout()", "Click"));
-
-            //AttributeHandlers.Add(new WrapperAttributeHandler());
-            //AttributeHandlers.Add(new WorkflowAttributeHandler());
         }
     }
 }
