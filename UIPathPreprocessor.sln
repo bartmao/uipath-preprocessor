@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPath.Preprossor.Lib", "UI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPath.Preprocessor.Lib.Test", "UIPath.Preprocessor.Lib.Test\UIPath.Preprocessor.Lib.Test.csproj", "{B1DE9DAD-910F-4C0B-957F-7473C266F6B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPathInvoker", "UIPathInvoker\UIPathInvoker.csproj", "{573343B2-7685-49B2-B4C4-C81E56E52EB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{B1DE9DAD-910F-4C0B-957F-7473C266F6B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1DE9DAD-910F-4C0B-957F-7473C266F6B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1DE9DAD-910F-4C0B-957F-7473C266F6B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{573343B2-7685-49B2-B4C4-C81E56E52EB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{573343B2-7685-49B2-B4C4-C81E56E52EB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{573343B2-7685-49B2-B4C4-C81E56E52EB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{573343B2-7685-49B2-B4C4-C81E56E52EB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
