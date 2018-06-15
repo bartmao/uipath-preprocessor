@@ -30,12 +30,11 @@ namespace ConsoleApplication1
             var mainSeq = doc.Elements().First().Elements().Single(e => e.Name.LocalName == "Sequence");
             var activities = new List<XElement>();
             DFSActvities(mainSeq, activities);
+
             foreach (var activity in activities)
             {
                 if (activity.XAttribute("WorkflowViewState.IdRef", XMLExetension.ns_sap2010) != null)
                 {
-                    activity.SetAttributeValue("UIPathPreprocessor", "TRUE");
-
                     var attr = activity.XAttribute("Annotation.AnnotationText", XMLExetension.ns_sap2010);
                     var attrs = new List<Tuple<string, string>>();
                     if (attr != null)
@@ -50,7 +49,7 @@ namespace ConsoleApplication1
                         }
                     }
 
-                    var workitem = new WorkItem()
+                    var workContext = new WorkContext(activity)
                     {
                         Doc = CurDoc,
                         FileName = FileName,
@@ -61,7 +60,7 @@ namespace ConsoleApplication1
                     {
                         if (h.Test(activity, attrs))
                         {
-                            h.WorkItem = workitem;
+                            h.WorkContext = workContext;
                             h.Handle();
                         }
                     }
@@ -70,14 +69,15 @@ namespace ConsoleApplication1
                     {
                         var attribute = attrTuple.Item1;
                         var h = ActivityHandlers.AttributeHandlers.FirstOrDefault(h1 => h1.Name == attribute);
-                        if (h == null) {
+                        if (h == null)
+                        {
                             Console.WriteLine("No handler for " + attribute);
                             continue;
                         }
 
                         Console.WriteLine("Processing attribute:" + attribute);
                         var method = h.GetType().GetMethod("Handle");
-                        h.WorkItem = workitem;
+                        h.WorkContext = workContext;
 
                         var ps = method.GetParameters();
                         var margs = new ArgumentsResolver(activity).Resolve(attrTuple.Item2);
@@ -100,13 +100,14 @@ namespace ConsoleApplication1
                             method.Invoke(h, margs);
                         }
                     }
-
-                    // the target activity could updated by the hanlder
-                    workitem.GetActivity().Attribute("UIPathPreprocessor").Remove();
                 }
             }
-
+            
             doc.Save(@"C:\Users\bmao002\Documents\UiPath\test1\Main1_1.xaml");
+            foreach (var file in Globals.ToSaveXMLFiles.Keys)
+            {
+                Globals.ToSaveXMLFiles[file].Save(file);
+            }
         }
 
         static void DFSActvities(XElement ele, List<XElement> activities)

@@ -20,6 +20,12 @@ namespace UIPath.Preprossor.Lib
 
         public XElement Activity { get; set; }
 
+        public string TargetFile { get; set; }
+
+        public XElement WorkflowTarget { get; set; }
+
+        public XElement Target { get; set; }
+
         public string NewFileForOriginalActivity { get; set; }
 
         // Only for case when new workflow is genreated for keeping this activity
@@ -30,6 +36,7 @@ namespace UIPath.Preprossor.Lib
             Doc = activity.Document;
             Activity = activity;
             OriginalActivity = activity;
+            Target = activity;
         }
 
         public void MoveActivity(XElement container, string containerFile)
@@ -46,15 +53,25 @@ namespace UIPath.Preprossor.Lib
             }
         }
 
-        public XElement ReplaceActivity(XElement newActivity)
+        public void WrapTarget(XElement wrapper)
         {
-            var doc = Activity.Document;
-            newActivity.SetAttributeValue("UIPathPreprocessor", "TRUE");
-            Activity.ReplaceWith(newActivity);
-            var newEle = doc.XPathSelectElement("//*[@UIPathPreprocessor]");
-            newEle.Attribute("UIPathPreprocessor").Remove();
-            Activity = newEle;
-            return newEle;
+            var replacement = wrapper.XPathSelectElement(".//*[@DisplayName=\"Placeholder\"]");//  wdoc.Descendants().SingleOrDefault(e => e.XAttribute("DisplayName")?.Value == "Placeholder");
+            if (replacement != null)
+            {
+                Activity.SetAttributeValue("UIPathPreprocessor", "TRUE");
+                replacement.ReplaceWith(Activity);
+                Activity.ReplaceWith(wrapper);
+                Activity = Doc.XPathSelectElement("//*[@UIPathPreprocessor]");
+                Activity.Attribute("UIPathPreprocessor").Remove();
+            }
+            else
+            {
+                wrapper.SetAttributeValue("UIPathPreprocessor", "TRUE");
+                Activity.ReplaceWith(wrapper);
+                var newActivity = Doc.XPathSelectElement("//*[@UIPathPreprocessor]");
+                newActivity.Attribute("UIPathPreprocessor").Remove();
+                Activity = newActivity;
+            }
         }
     }
 }

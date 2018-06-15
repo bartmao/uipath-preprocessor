@@ -28,20 +28,19 @@ namespace UIPath.Preprossor.Lib
                 counter++;
             }
 
-            var doc = XDocument.Parse(wapperTxt);
-            var replacement = doc.Descendants().SingleOrDefault(e => e.XAttribute("DisplayName")?.Value == "Placeholder");
-            if (replacement != null)
-            {
-                replacement.ReplaceWith(target);
-                //WorkContext.MoveActivity(replacement, wPath);
-            }
+            var wdoc = XDocument.Parse(wapperTxt);
+            //var replacement = wdoc.Descendants().SingleOrDefault(e => e.XAttribute("DisplayName")?.Value == "Placeholder");
+            //if (replacement != null)
+            //{
+            //    replacement.ReplaceWith(target);
+            //}
 
-            var wrapper = doc.XElement("Activity").XElement("Sequence");
-            WorkContext.ReplaceActivity(wrapper);
+            var wrapper = wdoc.XElement("Activity").XElement("Sequence");
+            WorkContext.WrapTarget(wrapper);
 
             // Namespaces
             var existingNs = WorkContext.Doc.GetNamespaces();
-            var templateNs = doc.GetNamespaces();
+            var templateNs = wdoc.GetNamespaces();
             foreach (var ns in templateNs)
             {
                 if (!existingNs.ContainsKey(ns.Key))
