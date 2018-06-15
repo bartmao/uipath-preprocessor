@@ -20,37 +20,10 @@ namespace UIPath.Preprossor.Lib
 
         public XElement Activity { get; set; }
 
-        public string TargetFile { get; set; }
-
-        public XElement WorkflowTarget { get; set; }
-
-        public XElement Target { get; set; }
-
-        public string NewFileForOriginalActivity { get; set; }
-
-        // Only for case when new workflow is genreated for keeping this activity
-        public XElement OriginalActivity { get; set; }
-
         public WorkContext(XElement activity)
         {
             Doc = activity.Document;
             Activity = activity;
-            OriginalActivity = activity;
-            Target = activity;
-        }
-
-        public void MoveActivity(XElement container, string containerFile)
-        {
-            if (Activity == OriginalActivity)
-            {
-                container.Add(Activity);
-                OriginalActivity = container.Elements().Last();
-                NewFileForOriginalActivity = containerFile;
-            }
-            else
-            {
-                throw new Exception("Original activity is already moved");
-            }
         }
 
         public void WrapTarget(XElement wrapper)
