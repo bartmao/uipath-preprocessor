@@ -15,10 +15,6 @@ namespace ConsoleApplication1
 {
     class Program
     {
-        //public static XDocument CurDoc { get; set; }
-
-        //public static string FileName { get; set; }
-
         static void Main(string[] args)
         {
             args = new string[1];

@@ -28,10 +28,7 @@ namespace UIPathInvoker
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                 {
                     label1.Text = fbd.SelectedPath;
-                    var root = new TreeNode(Path.GetFileName(label1.Text));
-                    root.Tag = fbd.SelectedPath;
-                    ConstructTreeNodes(root);
-                    tv.Nodes.Add(root);
+                    ConstructTreeNodeW(label1.Text);
                 }
             }
         }
@@ -57,10 +54,88 @@ namespace UIPathInvoker
 
         private void btnCompile_Click(object sender, EventArgs e)
         {
+            var pi = new ProcessStartInfo();
+            //pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
+            //pi.Arguments = @"-f C:\Users\bmao002\Documents\UiPath\test1\Main1.1.xaml";
+            pi.FileName = Environment.CurrentDirectory + "\\Compiler.exe";
+            pi.RedirectStandardOutput = true;
+            pi.RedirectStandardError = true;
+            pi.UseShellExecute = false;
+            pi.CreateNoWindow = true;
+
+
             if (tv.SelectedNode != null && tv.SelectedNode.Text.EndsWith(".xaml"))
-                Process.Start("Compiler.exe", tv.SelectedNode.Tag.ToString());
+            {
+                pi.Arguments = tv.SelectedNode.Tag.ToString();
+            }
             else
-                Process.Start("Compiler.exe", label1.Text + "\\project.json");
+            {
+                pi.Arguments = label1.Text + "\\project.json";
+            }
+
+            var p = new Process();
+            p.StartInfo = pi;
+            p.Start();
+            while (!p.StandardOutput.EndOfStream)
+            {
+                string line = p.StandardOutput.ReadLine();
+                richTextBox1.AppendText(line + Environment.NewLine);
+            }
+        }
+
+        private void ConstructTreeNodeW(string folderPath)
+        {
+            var root = new TreeNode(Path.GetFileName(folderPath));
+            root.Tag = folderPath;
+            ConstructTreeNodes(root);
+            tv.Nodes.Add(root);
+        }
+
+        private void tv_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        private void tv_DragDrop(object sender, DragEventArgs e)
+        {
+            var fs = e.Data.GetData("FileNameW") as string[];
+            if (fs != null && fs.Length > 0)
+            {
+                tv.Nodes.Clear();
+                ConstructTreeNodeW(fs[0]);
+            }
+        }
+
+        private void btnRun_Click(object sender, EventArgs e)
+        {
+            var pi = new ProcessStartInfo();
+            //pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
+            //pi.Arguments = @"-f C:\Users\bmao002\Documents\UiPath\test1\Main1.1.xaml";
+            pi.FileName = Environment.CurrentDirectory + "\\Compiler.exe";
+            pi.Arguments = @"C:\Users\bmao002\Desktop\New folder\TestPreprocessor";
+            pi.RedirectStandardOutput = true;
+            pi.RedirectStandardError = true;
+            pi.UseShellExecute = false;
+            pi.CreateNoWindow = true;
+            var p = new Process();
+            p.StartInfo = pi;
+            p.Exited += P_Exited;
+            p.Start();
+            
+            //while (!p..EndOfStream)
+            //{
+
+
+            //    string line = p.StandardOutput.ReadLine();
+            //    MessageBox.Show(line);
+
+            //}
+
+        }
+
+        private void P_Exited(object sender, EventArgs e)
+        {
+            MessageBox.Show("End");
         }
     }
 }
