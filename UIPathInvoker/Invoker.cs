@@ -62,8 +62,6 @@ namespace UIPathInvoker
             pi.RedirectStandardError = true;
             pi.UseShellExecute = false;
             pi.CreateNoWindow = true;
-
-
             if (tv.SelectedNode != null && tv.SelectedNode.Text.EndsWith(".xaml"))
             {
                 pi.Arguments = tv.SelectedNode.Tag.ToString();
@@ -75,11 +73,39 @@ namespace UIPathInvoker
 
             var p = new Process();
             p.StartInfo = pi;
+            p.ErrorDataReceived += P_ErrorDataReceived;
+            p.OutputDataReceived += P_OutputDataReceived;
             p.Start();
-            while (!p.StandardOutput.EndOfStream)
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();            
+        }
+
+        private void P_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            string line = e.Data;
+            if (line != null)
             {
-                string line = p.StandardOutput.ReadLine();
+                richTextBox1.BeginInvoke(new Action(() => {
+                    var s = richTextBox1.Text.Length;
+                    richTextBox1.AppendText(line + Environment.NewLine);
+                    richTextBox1.SelectionStart = s;
+                    richTextBox1.SelectionLength = line.Length;
+                    richTextBox1.SelectionColor = Color.ForestGreen;
+                }));
+            }
+
+        }
+
+        private void P_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            string line = e.Data;
+            if (line != null)
+            {
+                var s = richTextBox1.Text.Length;
                 richTextBox1.AppendText(line + Environment.NewLine);
+                richTextBox1.SelectionStart = s;
+                richTextBox1.SelectionLength = line.Length;
+                richTextBox1.SelectionColor = Color.Red;
             }
         }
 
@@ -121,16 +147,6 @@ namespace UIPathInvoker
             p.StartInfo = pi;
             p.Exited += P_Exited;
             p.Start();
-            
-            //while (!p..EndOfStream)
-            //{
-
-
-            //    string line = p.StandardOutput.ReadLine();
-            //    MessageBox.Show(line);
-
-            //}
-
         }
 
         private void P_Exited(object sender, EventArgs e)

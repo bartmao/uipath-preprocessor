@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -17,31 +18,42 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-            args = new string[1];
-            args[0] = @"C:\Users\bmao002\Documents\UiPath\test1\project.json";
-            if (args.Length < 1) return;
-
-            ActivityHandlers.Load();
-            if (args[0].EndsWith(".xaml"))
+            try
             {
-                ProcessWorkflow(args[0], Path.GetDirectoryName(args[0]));
-            }
-            else if (args[0].EndsWith("project.json"))
-            {
-                var projDir = Path.GetDirectoryName(args[0]);
-                var outProjDir = Path.GetDirectoryName(projDir) + "\\" + Path.GetFileName(projDir) + "_Out";
-                if (Directory.Exists(outProjDir))
-                    DeleteDirectory(outProjDir);
-                //Now Create all of the directories
-                foreach (string dirPath in Directory.GetDirectories(projDir, "*", SearchOption.AllDirectories))
-                    Directory.CreateDirectory(dirPath.Replace(projDir, outProjDir));
-                //Copy all the files & Replaces any files with the same name
-                foreach (string newPath in Directory.GetFiles(projDir, "*.*", SearchOption.AllDirectories))
-                    File.Copy(newPath, newPath.Replace(projDir, outProjDir), true);
+                Console.WriteLine("Starting the preprocessor...");
 
-                foreach (string newPath in Directory.GetFiles(outProjDir, "*.xaml", SearchOption.AllDirectories))
-                    ProcessWorkflow(newPath, outProjDir);
+                //args = new string[1];
+                //args[0] = @"C:\Users\bmao002\Desktop\New folder\TestPreprocessor\project.json";
+                if (args.Length < 1) return;
+                ActivityHandlers.Load();
+                if (args[0].EndsWith(".xaml"))
+                {
+                    ProcessWorkflow(args[0], Path.GetDirectoryName(args[0]));
+                }
+                else if (args[0].EndsWith("project.json"))
+                {
+                    var projDir = Path.GetDirectoryName(args[0]);
+                    var outProjDir = Path.GetDirectoryName(projDir) + "\\" + Path.GetFileName(projDir) + "_Out";
+                    if (Directory.Exists(outProjDir))
+                        DeleteDirectory(outProjDir);
+                    Directory.CreateDirectory(outProjDir);
+                    //Now Create all of the directories
+                    foreach (string dirPath in Directory.GetDirectories(projDir, "*", SearchOption.AllDirectories))
+                        Directory.CreateDirectory(dirPath.Replace(projDir, outProjDir));
+                    //Copy all the files & Replaces any files with the same name
+                    foreach (string newPath in Directory.GetFiles(projDir, "*.*", SearchOption.AllDirectories))
+                        File.Copy(newPath, newPath.Replace(projDir, outProjDir), true);
+
+                    foreach (string newPath in Directory.GetFiles(outProjDir, "*.xaml", SearchOption.AllDirectories))
+                        ProcessWorkflow(newPath, outProjDir);
+                }
             }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex.StackTrace);
+            }
+
         }
 
         static void ProcessWorkflow(string workflowFile, string workingFolder)
