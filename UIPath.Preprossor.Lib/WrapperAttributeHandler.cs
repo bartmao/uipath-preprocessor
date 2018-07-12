@@ -24,16 +24,12 @@ namespace UIPath.Preprossor.Lib
             var counter = 1;
             foreach (var arg in args)
             {
-                wapperTxt = wapperTxt.Replace("\"$" + counter + "\"", "\"" + arg + "\"");
+                wapperTxt = wapperTxt.Replace("\"$" + counter + "\"", XMLExetension.Escape("\"" + arg + "\""));
+                wapperTxt = wapperTxt.Replace("&quot;$" + counter + "&quot;", XMLExetension.Escape("\"" + arg + "\""));
                 counter++;
             }
 
             var wdoc = XDocument.Parse(wapperTxt);
-            //var replacement = wdoc.Descendants().SingleOrDefault(e => e.XAttribute("DisplayName")?.Value == "Placeholder");
-            //if (replacement != null)
-            //{
-            //    replacement.ReplaceWith(target);
-            //}
 
             var wrapper = wdoc.XElement("Activity").XElement("Sequence");
             WorkContext.WrapTarget(wrapper);

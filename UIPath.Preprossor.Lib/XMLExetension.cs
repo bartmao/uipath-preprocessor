@@ -63,10 +63,31 @@ namespace UIPath.Preprossor.Lib
 
         public static string Escape(string unescaped)
         {
-            XmlDocument doc = new XmlDocument();
-            XmlNode node = doc.CreateElement("root");
-            node.InnerText = unescaped;
-            return node.InnerXml;
+            // only for uipath
+            var ul = new string[] { "\"", "'", "<", ">", "&" };
+            var el = new string[] { "&quot;", "&apos;", "&lt;", "&gt;", "&amp;" };
+            var sb = new StringBuilder();
+            foreach (var c in unescaped)
+            {
+                if (ul.Contains(c.ToString()))
+                {
+                    sb.Append(el[Array.IndexOf(ul, c.ToString())]);
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public static string UnEscape(string escaped)
+        {
+            var doc = new XmlDocument();
+            var node = doc.CreateElement("root");
+            node.InnerXml = escaped;
+            return node.InnerText;
         }
     }
 

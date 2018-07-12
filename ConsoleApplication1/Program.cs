@@ -22,8 +22,8 @@ namespace ConsoleApplication1
             {
                 Console.WriteLine("Starting the preprocessor...");
 
-                //args = new string[1];
-                //args[0] = @"C:\Users\bmao002\Desktop\New folder\TestPreprocessor\project.json";
+                args = new string[1];
+                args[0] = @"C:\Users\bmao002\Desktop\New folder\TestPreprocessor\project.json";
                 if (args.Length < 1) return;
                 ActivityHandlers.Load();
                 if (args[0].EndsWith(".xaml"))

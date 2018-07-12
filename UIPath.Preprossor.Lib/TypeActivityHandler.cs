@@ -19,7 +19,7 @@ namespace UIPath.Preprossor.Lib
 
         public override bool Test(XElement activity, List<Tuple<string, string>> attrs)
         {
-            return Regex.IsMatch(activity.Name.LocalName, "^" + RegexFilter + "$");
+            return Regex.IsMatch(activity.Name.LocalName, "^" + RegexFilter + "$") && activity.Name.LocalName != "DebugSymbol.Symbol";
         }
 
         public abstract void Handle();
