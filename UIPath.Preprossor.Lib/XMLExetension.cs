@@ -87,7 +87,7 @@ namespace UIPath.Preprossor.Lib
             var doc = new XmlDocument();
             var node = doc.CreateElement("root");
             node.InnerXml = escaped;
-            return node.InnerText;
+            return node.InnerXml;
         }
     }
 

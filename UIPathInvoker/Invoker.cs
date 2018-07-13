@@ -135,23 +135,17 @@ namespace UIPathInvoker
         private void btnRun_Click(object sender, EventArgs e)
         {
             var pi = new ProcessStartInfo();
-            //pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
-            //pi.Arguments = @"-f C:\Users\bmao002\Documents\UiPath\test1\Main1.1.xaml";
-            pi.FileName = Environment.CurrentDirectory + "\\Compiler.exe";
-            pi.Arguments = @"C:\Users\bmao002\Desktop\New folder\TestPreprocessor";
+            pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
+            pi.Arguments = "-f \"C:\\Users\\bmao002\\Desktop\\New folder\\TestPreprocessor\\Main.xaml\"";
             pi.RedirectStandardOutput = true;
             pi.RedirectStandardError = true;
             pi.UseShellExecute = false;
             pi.CreateNoWindow = true;
             var p = new Process();
+            p.ErrorDataReceived += P_ErrorDataReceived;
+            p.OutputDataReceived += P_OutputDataReceived;
             p.StartInfo = pi;
-            p.Exited += P_Exited;
             p.Start();
-        }
-
-        private void P_Exited(object sender, EventArgs e)
-        {
-            MessageBox.Show("End");
         }
     }
 }

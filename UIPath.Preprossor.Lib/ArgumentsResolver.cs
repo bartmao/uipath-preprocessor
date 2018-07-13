@@ -116,11 +116,15 @@ namespace UIPath.Preprossor.Lib
                 try
                 {
                     var attr = (IEnumerable)Activity.XPathEvaluate(sb.ToString(2, sb.Length - 3), XMLExetension.NSManager);
-                    var attrVal =  XMLExetension.UnEscape(attr.Cast<XAttribute>().First().Value);
+                    var attrVal =  attr.Cast<XAttribute>().First().Value;
                     Console.WriteLine(attrVal);
                     return attrVal;
                 }
                 catch (InvalidOperationException ex)
+                {
+                    throw new Exception("Invalid XPath expression");
+                }
+                catch (Exception ex)
                 {
                     throw new Exception("Invalid XPath expression");
                 }

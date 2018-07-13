@@ -24,8 +24,7 @@ namespace UIPath.Preprossor.Lib
             var counter = 1;
             foreach (var arg in args)
             {
-                wapperTxt = wapperTxt.Replace("\"$" + counter + "\"", XMLExetension.Escape("\"" + arg + "\""));
-                wapperTxt = wapperTxt.Replace("&quot;$" + counter + "&quot;", XMLExetension.Escape("\"" + arg + "\""));
+                wapperTxt = wapperTxt.Replace("$" + counter + "$", XMLExetension.Escape(arg));
                 counter++;
             }
 
