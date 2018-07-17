@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -77,7 +79,10 @@ namespace UIPathInvoker
             p.OutputDataReceived += P_OutputDataReceived;
             p.Start();
             p.BeginOutputReadLine();
-            p.BeginErrorReadLine();            
+            p.BeginErrorReadLine();
+
+            
+            
         }
 
         private void P_OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -134,6 +139,22 @@ namespace UIPathInvoker
 
         private void btnRun_Click(object sender, EventArgs e)
         {
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            var ip = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10086);
+            socket.Bind(ip);
+            socket.Listen(0);
+            var req = socket.Accept();
+            using (var r = new StreamReader(new NetworkStream(req)))
+            {
+                var msg = r.ReadLine();
+                while (msg != null)
+                {
+                    MessageBox.Show(msg);
+                    msg = r.ReadLine();
+                }
+            }
+            socket.Close();
+            return;
             var pi = new ProcessStartInfo();
             pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
             pi.Arguments = "-f \"C:\\Users\\bmao002\\Desktop\\New folder\\TestPreprocessor\\Main.xaml\"";
