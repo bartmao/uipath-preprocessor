@@ -16,6 +16,10 @@ namespace ConsoleApplication1
 {
     class Program
     {
+        static XDocument StartWorkflow { get; set; }
+
+        static XElement MainActivity { get; set; }
+
         static void Main(string[] args)
         {
             try
@@ -61,12 +65,15 @@ namespace ConsoleApplication1
             var doc = XDocument.Load(workflowFile);
 
             var mainSeq = doc.Elements().First().Elements().Single(e => e.Name.LocalName == "Sequence");
-            var activities = new List<XElement>();
+            var activities = new List<XElement>() { mainSeq };
+            MainActivity = mainSeq;
+            if (StartWorkflow == null) StartWorkflow = doc;
             DFSActvities(mainSeq, activities);
 
             #region process activities
             foreach (var activity in activities)
             {
+                // Get existing attributes
                 var attr = activity.XAttribute("Annotation.AnnotationText", XMLExetension.ns_sap2010);
                 var attrs = new List<Tuple<string, string>>();
                 if (attr != null)
@@ -81,13 +88,18 @@ namespace ConsoleApplication1
                     }
                 }
 
+                // Construct the work context
                 var workContext = new WorkContext(activity)
                 {
                     Doc = doc,
                     FileName = workflowFile,
                     WorkingPath = workingFolder,
-                    Attributes = attrs
+                    Attributes = attrs,
+                    IsMainActivity = activity == MainActivity,
+                    IsStartWorflow = StartWorkflow == doc
                 };
+
+                // Typed hanlders
                 foreach (var h in ActivityHandlers.TypedHandlers)
                 {
                     if (h.Test(activity, attrs))
@@ -97,6 +109,7 @@ namespace ConsoleApplication1
                     }
                 }
 
+                // Attribute handlers
                 foreach (var attrTuple in attrs)
                 {
                     var attribute = attrTuple.Item1;
@@ -135,11 +148,15 @@ namespace ConsoleApplication1
             }
             #endregion
 
+            // Save files
+            Console.WriteLine("Save file " + workflowFile);
             doc.Save(workflowFile);
             foreach (var file in Globals.ToSaveXMLFiles.Keys)
             {
+                Console.WriteLine("Save file " + file);
                 Globals.ToSaveXMLFiles[file].Save(file);
             }
+            Globals.ToSaveXMLFiles.Clear();
         }
 
         static void DFSActvities(XElement ele, List<XElement> activities)

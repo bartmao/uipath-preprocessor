@@ -40,21 +40,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActivityHandler.cs" />
-    <Compile Include="AttributeControllerActivityHandler.cs" />
-    <Compile Include="AttributeHanlder.cs" />
-    <Compile Include="AttributeHandlers.cs" />
-    <Compile Include="ArgumentsResolver.cs" />
-    <Compile Include="Globals.cs" />
-    <Compile Include="TimeoutAttributeHandler.cs" />
-    <Compile Include="TypeActivityHandler.cs" />
-    <Compile Include="WorkflowAttributeHandler.cs" />
-    <Compile Include="WrapperAttributeHandler.cs" />
-    <Compile Include="WorkItem.cs" />
-    <Compile Include="XAMLExtension.cs" />
-    <Compile Include="XMLExetension.cs" />
+    <Compile Include="Hanlders\ActivityHandler.cs" />
+    <Compile Include="Hanlders\AttributeControllerActivityHandler.cs" />
+    <Compile Include="Hanlders\AttributeHanlder.cs" />
+    <Compile Include="Instructure\AttributeHandlers.cs" />
+    <Compile Include="Instructure\ArgumentsResolver.cs" />
+    <Compile Include="Instructure\Globals.cs" />
+    <Compile Include="Hanlders\TimeoutAttributeHandler.cs" />
+    <Compile Include="Hanlders\TypeActivityHandler.cs" />
+    <Compile Include="Hanlders\WorkflowAttributeHandler.cs" />
+    <Compile Include="Hanlders\WrapperAttributeHandler.cs" />
+    <Compile Include="Instructure\WorkItem.cs" />
+    <Compile Include="Instructure\XAMLExtension.cs" />
+    <Compile Include="Instructure\XMLExetension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
