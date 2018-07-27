@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -81,8 +82,8 @@ namespace UIPathInvoker
             p.BeginOutputReadLine();
             p.BeginErrorReadLine();
 
-            
-            
+
+
         }
 
         private void P_OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -90,7 +91,8 @@ namespace UIPathInvoker
             string line = e.Data;
             if (line != null)
             {
-                richTextBox1.BeginInvoke(new Action(() => {
+                richTextBox1.BeginInvoke(new Action(() =>
+                {
                     var s = richTextBox1.Text.Length;
                     richTextBox1.AppendText(line + Environment.NewLine);
                     richTextBox1.SelectionStart = s;
@@ -139,22 +141,45 @@ namespace UIPathInvoker
 
         private void btnRun_Click(object sender, EventArgs e)
         {
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            var ip = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10086);
-            socket.Bind(ip);
-            socket.Listen(0);
-            var req = socket.Accept();
-            using (var r = new StreamReader(new NetworkStream(req)))
+            richTextBox1.Clear();
+            btnRun.Enabled = false;
+            ThreadPool.QueueUserWorkItem(o =>
             {
-                var msg = r.ReadLine();
-                while (msg != null)
+                try
                 {
-                    MessageBox.Show(msg);
-                    msg = r.ReadLine();
+                    // Listen for running
+                    var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    var ip = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10086);
+                    socket.Bind(ip);
+                    socket.Listen(0);
+
+                    var conn = socket.Accept();
+                    using (var r = new StreamReader(new NetworkStream(conn)))
+                    {
+                        var msg = r.ReadLine();
+                        
+                        while (msg != null)
+                        {
+                            richTextBox1.BeginInvoke((Action)(() =>
+                            {
+                                richTextBox1.AppendText(msg + Environment.NewLine);
+                            }));
+                            Debug.WriteLine(msg);
+                            msg = r.ReadLine();
+                        }
+                    }
+                    socket.Dispose();
+                    btnRun.Invoke((Action)(() => btnRun.Enabled = true));
                 }
-            }
-            socket.Close();
+                catch (Exception)
+                {
+                    throw;
+                }
+            }, null);
+
             return;
+
+
             var pi = new ProcessStartInfo();
             pi.FileName = @"C:\Users\bmao002\AppData\Local\UiPath\app-18.2.3\UIRobot.exe";
             pi.Arguments = "-f \"C:\\Users\\bmao002\\Desktop\\New folder\\TestPreprocessor\\Main.xaml\"";

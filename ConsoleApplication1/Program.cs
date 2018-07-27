@@ -65,10 +65,11 @@ namespace ConsoleApplication1
             var doc = XDocument.Load(workflowFile);
 
             var mainSeq = doc.Elements().First().Elements().Single(e => e.Name.LocalName == "Sequence");
-            var activities = new List<XElement>() { mainSeq };
+            var activities = new List<XElement>() { };
             MainActivity = mainSeq;
             if (StartWorkflow == null) StartWorkflow = doc;
             DFSActvities(mainSeq, activities);
+            activities.Add(mainSeq);
 
             #region process activities
             foreach (var activity in activities)
@@ -102,9 +103,9 @@ namespace ConsoleApplication1
                 // Typed hanlders
                 foreach (var h in ActivityHandlers.TypedHandlers)
                 {
-                    if (h.Test(activity, attrs))
+                    h.WorkContext = workContext;
+                    if (h.Test())
                     {
-                        h.WorkContext = workContext;
                         h.Handle();
                     }
                 }
