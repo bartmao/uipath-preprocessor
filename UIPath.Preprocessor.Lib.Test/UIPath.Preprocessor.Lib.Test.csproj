@@ -60,6 +60,10 @@
     <Compile Include="XPathTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Communicator\Communicator.csproj">
+      <Project>{4d1727cf-c03c-4399-86f6-3f1dc7a3a201}</Project>
+      <Name>Communicator</Name>
+    </ProjectReference>
     <ProjectReference Include="..\UIPath.Preprossor.Lib\UIPath.Preprossor.Lib.csproj">
       <Project>{02995800-42dc-4e06-81f8-f06ad2ddccfc}</Project>
       <Name>UIPath.Preprossor.Lib</Name>

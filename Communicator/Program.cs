@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
@@ -13,6 +14,8 @@ namespace Communicator
     {
         static void Main(string[] args)
         {
+            Log(string.Join(",", args));
+
             var f = args[0]; // file name
             var o = args[1]; // w/r
             string l = null;
@@ -24,24 +27,84 @@ namespace Communicator
             }
             //File = @"C:\Personal\communicator.data";
 
-            var q = new SharedMessageQueue(f);
-            if (o == "w")
-                q.Enqueue(int.Parse(l), msg);
+            EventWaitHandle locker;
+            EventWaitHandle readLocker;
+            EventWaitHandle writeLocker;
+            var succeed = EventWaitHandle.TryOpenExisting("Communicator", out locker);
+            if (!succeed)
+            {
+                Log("Creating Communicator");
+                locker = new EventWaitHandle(true, EventResetMode.AutoReset, "Communicator");
+            }
             else
             {
-                var outMsg = q.Dequeue();
-                Console.WriteLine(outMsg.Level);
-                Console.WriteLine(outMsg.Timestamp);
-                Console.WriteLine(outMsg.Message);
+                Log("Opening Communicator");
             }
+            succeed = EventWaitHandle.TryOpenExisting("Communicator_Read", out readLocker);
+            if (!succeed)
+            {
+                Log("Create read mutex");
+                readLocker = new EventWaitHandle(false, EventResetMode.AutoReset, "Communicator_Read");
+            }
+            succeed = EventWaitHandle.TryOpenExisting("Communicator_Write", out writeLocker);
+            if (!succeed)
+            {
+                Log("Create write mutex");
+                writeLocker = new EventWaitHandle(false, EventResetMode.AutoReset, "Communicator_Write");
+            }
+
+            try
+            {
+                Operation:
+                if (!locker.WaitOne(3000)) throw new Exception("MMF file occupied");
+
+                var q = new SharedMessageQueue(f);
+                if (o == "w")
+                {
+                    var enqueued = q.Enqueue(int.Parse(l), msg);
+                    if (!enqueued)
+                    {
+                        locker.Set();
+                        if (!readLocker.WaitOne(60000))
+                        {
+                            Log("Failed to wait a read operation in 60s");
+                        }
+                        goto Operation;
+                    }
+                    writeLocker.Set();
+                }
+                else
+                {
+                    var outMsg = q.Dequeue();
+                    if (outMsg == null)
+                    {
+                        locker.Set();
+                        if (!writeLocker.WaitOne(60000))
+                        {
+                            Log("Failed to wait a write operation in 60s");
+                        }
+                        goto Operation;
+                    }
+                    Console.WriteLine(outMsg.Level);
+                    Console.WriteLine(outMsg.Timestamp);
+                    Console.WriteLine(outMsg.Message);
+                    readLocker.Set();
+                }
+            }
+            finally
+            {
+                locker.Set();
+            }
+        }
+
+        private static void Log(string msg)
+        {
+            Console.WriteLine("PID " + Process.GetCurrentProcess().Id + "=>" + msg);
         }
     }
 
     class SharedMessageQueue : IDisposable
     {
-        private Mutex locker;
-        private ManualResetEvent readLocker;
-        private ManualResetEvent writeLocker;
 
         string File { get; set; }
 
@@ -61,16 +124,12 @@ namespace Communicator
         {
             get
             {
-                locker.WaitOne();
                 var front = Accessor.ReadInt64(0);
-                locker.ReleaseMutex();
                 return front;
             }
             set
             {
-                locker.WaitOne();
                 Accessor.Write(0, value);
-                locker.ReleaseMutex();
             }
         }
 
@@ -78,16 +137,12 @@ namespace Communicator
         {
             get
             {
-                locker.WaitOne();
                 var rear = Accessor.ReadInt64(8);
-                locker.ReleaseMutex();
                 return rear;
             }
             set
             {
-                locker.WaitOne();
                 Accessor.Write(8, value);
-                locker.ReleaseMutex();
             }
         }
 
@@ -95,16 +150,12 @@ namespace Communicator
         {
             get
             {
-                locker.WaitOne();
                 var isEmpty = Accessor.ReadBoolean(16);
-                locker.ReleaseMutex();
                 return isEmpty;
             }
             set
             {
-                locker.WaitOne();
                 Accessor.Write(16, value);
-                locker.ReleaseMutex();
             }
         }
 
@@ -112,51 +163,42 @@ namespace Communicator
         {
             get
             {
-                locker.WaitOne();
                 var isFull = Accessor.ReadBoolean(17);
-                locker.ReleaseMutex();
                 return isFull;
             }
             set
             {
-                locker.WaitOne();
                 Accessor.Write(17, value);
-                locker.ReleaseMutex();
             }
         }
 
         public SharedMessageQueue(string file)
         {
             File = file;
-            var succeed = Mutex.TryOpenExisting("Communicator", out locker);
-            if (!succeed)
-            {
-                locker = new Mutex(false, "Communicator");
-            }
 
-            locker.WaitOne();
             if (System.IO.File.Exists(File))
             {
+                Log("Opening Queue File");
                 MMF = MemoryMappedFile.CreateFromFile(File, FileMode.Open, "communicator", MaxSize);
                 Accessor = MMF.CreateViewAccessor(0, ReservedSize);
+                Log("Opened Queue File");
             }
             else
             {
+                Log("Creating Queue File");
                 MMF = MemoryMappedFile.CreateFromFile(File, FileMode.Create, "communicator", MaxSize);
                 Accessor = MMF.CreateViewAccessor(0, ReservedSize);
                 Front = ReservedSize;
                 Rear = ReservedSize;
                 IsEmpty = true;
                 IsFull = false;
+                Log("Created Queue File");
             }
 
-            locker.ReleaseMutex();
-            readLocker = new ManualResetEvent(false);
-            writeLocker = new ManualResetEvent(false);
-            Console.WriteLine("Front:{0}, Rear:{1}", Front, Rear);
+            Log("Front:{0}, Rear:{1}", Front, Rear);
         }
 
-        public void Enqueue(int level, string msg)
+        public bool Enqueue(int level, string msg)
         {
             var c = Encoding.UTF8.GetBytes(msg);
             var data = new byte[c.Length + HeaderSize];
@@ -172,38 +214,31 @@ namespace Communicator
             using (var stream = MMF.CreateViewStream())
             {
                 stream.Position = Front;
-                WriteData0:
                 if (IsFull)
                 {
                     // No space
-                    Console.WriteLine("No space for writing data");
-                    readLocker.WaitOne(60000);
-                    goto WriteData0;
+                    Log("No space for writing data");
+                    return false;
                 }
                 else
                 {
                     if (Front + data.Length < stream.Length)
                     {
                         // Enough space to go
-                        locker.WaitOne();
                         stream.Write(data, 0, data.Length);
                         Front = stream.Position;
-                        Console.WriteLine("Enough space, enqueue data");
-                        locker.ReleaseMutex();
+                        Log("Enough space, enqueue data");
                     }
                     else
                     {
                         // No enough space, break into two parts
                         var firstLen = (int)(stream.Length - Front);
                         var secondLen = data.Length - firstLen;
-                        locker.WaitOne();
                         stream.Write(data, 0, firstLen);
                         stream.Position = ReservedSize; // reset to begin
                         stream.Write(data, firstLen - 1, secondLen);
                         Front = stream.Position;
-                        locker.ReleaseMutex();
-                        writeLocker.Set();
-                        Console.WriteLine("Split data and enqueue");
+                        Log("Split data and enqueue");
                     }
 
                     IsEmpty = false;
@@ -216,7 +251,8 @@ namespace Communicator
                     IsFull = true;
                 }
 
-                Console.WriteLine("Front:{0}, Rear:{1}", Front, Rear);
+                Log("Front:{0}, Rear:{1}", Front, Rear);
+                return true;
             }
 
         }
@@ -225,18 +261,15 @@ namespace Communicator
         {
             using (var stream = MMF.CreateViewStream())
             {
-                ReadData:
                 if (IsEmpty)
                 {
-                    Console.WriteLine("No Data");
-                    writeLocker.WaitOne(60000);
-                    goto ReadData;
+                    Log("No Data");
+                    return null;
                 }
                 else
                 {
                     using (var sr = new BinaryReader(stream))
                     {
-                        locker.WaitOne();
                         stream.Position = Rear;
                         var header = new byte[HeaderSize];
                         if (stream.Length - Rear >= HeaderSize)
@@ -275,8 +308,6 @@ namespace Communicator
 
                         Rear = stream.Position;
                         IsFull = false;
-                        locker.ReleaseMutex();
-                        readLocker.Set();
 
                         // 1. Rear is catching up Front
                         // 2. Rear is near the end of the stream, the remaining data is not enough
@@ -285,9 +316,9 @@ namespace Communicator
                             IsEmpty = true;
                         }
 
-                        Console.WriteLine("Front:{0}, Rear:{1}", Front, Rear);
+                        Log("Front:{0}, Rear:{1}", Front, Rear);
                         var message = Encoding.UTF8.GetString(msg);
-                        Console.WriteLine("Level:{0}, Time:{1}, Message:{2}", level, time, message);
+                        Log("Level:{0}, Time:{1}, Message:{2}", level, time, message);
                         return new SharedMessage()
                         {
                             Level = level,
@@ -305,6 +336,11 @@ namespace Communicator
         {
             if (MMF != null)
                 MMF.Dispose();
+        }
+
+        private void Log(string msg, params object[] args)
+        {
+            Console.WriteLine("PID " + Process.GetCurrentProcess().Id + "=>" + msg, args);
         }
     }
 
