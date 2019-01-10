@@ -1,0 +1,26 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETFramework,Version=v4.5.2": {}
+  },
+  "libraries": {},
+  "projectFileDependencyGroups": {
+    "": [],
+    ".NETFramework,Version=v4.5.2": []
+  },
+  "packageFolders": {
+    "C:\\Users\\bmao002\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "restore": {
+      "projectUniqueName": "TestPreprocessor",
+      "projectName": "TestPreprocessor",
+      "projectPath": "C:\\Users\\bmao002\\Desktop\\New folder\\TestPreprocessor",
+      "packagesPath": "C:\\Users\\bmao002\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\bmao002\\Desktop\\New folder\\TestPreprocessor"
+    },
+    "frameworks": {
+      "net452": {}
+    }
+  }
+}

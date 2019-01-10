@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Main", "ConsoleApplication1\Main.csproj", "{E9A53DF5-9886-4676-A7F0-879D0989D6C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Main", "Compiler\Main.csproj", "{E9A53DF5-9886-4676-A7F0-879D0989D6C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPath.Preprossor.Lib", "UIPath.Preprossor.Lib\UIPath.Preprossor.Lib.csproj", "{02995800-42DC-4E06-81F8-F06AD2DDCCFC}"
 EndProject

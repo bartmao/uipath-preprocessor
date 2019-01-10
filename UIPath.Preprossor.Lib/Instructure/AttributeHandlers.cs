@@ -39,6 +39,7 @@ namespace UIPath.Preprossor.Lib
                             var txt = File.ReadAllText(Environment.CurrentDirectory + "\\AttributesControllers.properties");
                             foreach (var line in txt.Split('\n'))
                             {
+                                if (line.Trim().StartsWith(@"\\")) continue;
                                 var args = line.Trim().Split('\t');
                                 if (args.Length == 2)
                                 {
