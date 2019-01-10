@@ -23,14 +23,11 @@ After:
 
 ## Abilities
 1. Wrappers (Most IMPORTANT one, other features can be created based on this)
-Syntax: 
 > Target\t+@Wrapper(Wrapper Name, $"@DisplayName")
 2. Workflow Extract
-Syntax: 
 > @Workflow
 3. Attribute Handler (A base class to modify attributes)
 4. Global Timeout Control (A sample attribute handler based on the Attribute Handler)
-Syntax: 
 > @Timeout(Seconds)
 
 
